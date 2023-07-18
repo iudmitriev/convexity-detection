@@ -21,7 +21,10 @@ class IntervalMatrix:
 
         if is_psd is None:
             if psd_interval is None:
-                self.interval = Interval([float('-inf'), float('inf')])
+                if self.shape == (1, 1):
+                    self.interval = self.data[0, 0]
+                else:
+                    self.interval = Interval([float('-inf'), float('inf')])
             else:
                 self.interval = psd_interval
         else:
