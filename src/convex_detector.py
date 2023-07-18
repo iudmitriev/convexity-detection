@@ -1,6 +1,7 @@
 import sympy as sym
 from abc import abstractmethod
 import interval
+from intervalmatrix import IntervalMatrix
 
 
 class BaseConvexDetector:
@@ -46,13 +47,7 @@ class HessianConvexDetector(BaseConvexDetector):
             raise ValueError(f'Expression should have only one named variable (which can be matrix), got {symbols}')
         second_diff = expression.diff(symbols[0]).diff(symbols[0])
         value_interval = self._get_interval(second_diff, symbol_space=symbol_space)
-        is_convex = value_interval.isIn(interval.Interval([0, float('inf')]))
-        is_concave = value_interval.isIn(interval.Interval([float('-inf'), 0]))
-        if is_convex:
-            return True
-        if is_concave:
-            return False
-        return None
+        return value_interval.sign()
 
     @abstractmethod
     def _match_atomic(self, atomic_expr, symbol_space=None):
@@ -65,7 +60,7 @@ class HessianConvexDetector(BaseConvexDetector):
         if isinstance(atomic_expr, sym.matrices.expressions.matexpr.MatrixSymbol):
             if atomic_expr.args[2] != 1:
                 raise NotImplementedError('Matrix is not a vector!')
-            return interval.Interval([float('-inf'), float('inf')])
+            return IntervalMatrix(is_psd=None)
         if isinstance(atomic_expr, sym.Identity):
             return interval.Interval([1, 1])
 

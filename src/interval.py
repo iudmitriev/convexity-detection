@@ -214,7 +214,7 @@ class Interval:
                 Decimal width (self): возвращает ширину интервала (точно)
                 boolean isIn(self, Interval other): возвращает True, если исходный интервал внутри other, False иначе
                 boolean isAround(self, Interval other): возвращает True, если other внутри исходного интервала, False иначе
-
+                boolean | None sign(self): возвращает True, если интервал больше либо равен нулю, False, ecли интервал меньше либо равен нулю, None иначе
             Математические функции:
                 Interval exp (self): интервал экспоненты данного интервала, с внешним расширяющим округлением
                 Interval sin (self): интервал синуса данного интервала, с внешним расширяющим округлением
@@ -322,6 +322,20 @@ class Interval:
         '''
         ointerval = Interval.valueToInterval(other)
         return (self.x[0] <= ointerval.x[0]) and (self.x[1] >= ointerval.x[1])
+
+    def sign(self):
+        '''
+                Знак интервала: True, если интервал больше либо равен нулю, False, ecли интервал меньше либо равен нулю, None иначе
+                        Возвращаемое значение:
+                                result (boolean): результат предиката вложенности другого интервала в текущий интервал;
+                '''
+        is_convex = self.isIn(Interval([0, float('inf')]))
+        if is_convex:
+            return True
+        is_concave = self.isIn(Interval([float('-inf'), 0]))
+        if is_concave:
+            return False
+        return None
 
     def __correctize(self):
         self.x = sorted(self.x)
