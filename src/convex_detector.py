@@ -1,7 +1,7 @@
 import sympy as sym
 from abc import abstractmethod
-import interval
-from intervalmatrix import IntervalMatrix
+from interval import Interval
+from intervalmatrix import IntervalMatrix, matrix_power
 
 
 class BaseConvexDetector:
@@ -45,24 +45,29 @@ class HessianConvexDetector(BaseConvexDetector):
         symbols = list(expression.free_symbols)
         if len(symbols) != 1:
             raise ValueError(f'Expression should have only one named variable (which can be matrix), got {symbols}')
-        second_diff = expression.diff(symbols[0]).diff(symbols[0])
-        value_interval = self._get_interval(second_diff, symbol_space=symbol_space)
+        second_diff = sym.diff(sym.diff(expression, symbols[0]), symbols[0])
+        return self._positivity_detection(second_diff, symbol_space)
+
+    def _positivity_detection(self, expression, symbol_space=None):
+        value_interval = self._get_interval(expression, symbol_space=symbol_space)
         return value_interval.sign()
 
     @abstractmethod
     def _match_atomic(self, atomic_expr, symbol_space=None):
         if isinstance(atomic_expr, sym.core.numbers.Integer):
-            return int(atomic_expr)
+            return Interval.valueToInterval(int(atomic_expr))
+        if isinstance(atomic_expr, sym.core.numbers.Float):
+            return Interval.valueToInterval(int(atomic_expr))
         if isinstance(atomic_expr, sym.core.symbol.Symbol):
             if (symbol_space is not None) and (str(atomic_expr) in symbol_space):
                 return symbol_space[str(atomic_expr)]
-            return interval.Interval([float('-inf'), float('inf')])
+            return Interval([float('-inf'), float('inf')])
         if isinstance(atomic_expr, sym.matrices.expressions.matexpr.MatrixSymbol):
-            if atomic_expr.args[2] != 1:
-                raise NotImplementedError('Matrix is not a vector!')
+            if (symbol_space is not None) and (str(atomic_expr) in symbol_space):
+                return symbol_space[str(atomic_expr)]
             return IntervalMatrix(is_psd=None)
         if isinstance(atomic_expr, sym.Identity):
-            return interval.Interval([1, 1])
+            return Interval([1, 1])
 
         if isinstance(atomic_expr, sym.core.Mul):
             if len(atomic_expr.args) == 2:
@@ -72,7 +77,7 @@ class HessianConvexDetector(BaseConvexDetector):
                 first_is_matrix = isinstance(first_arg, sym.matrices.expressions.MatrixExpr)
                 second_is_matrix = isinstance(second_arg, sym.matrices.expressions.MatrixExpr)
                 if first_is_matrix and second_is_matrix and first_arg.equals(second_arg.T):
-                    return interval.Interval([0, float('inf')])
+                    return Interval([0, float('inf')])
         return None
 
     @abstractmethod
@@ -85,15 +90,21 @@ class HessianConvexDetector(BaseConvexDetector):
         for sub_tree in expression.args:
             sub_intervals.append(self._get_interval(sub_tree, symbol_space=symbol_space))
 
-        symbols = [sym.Symbol(f'x{i}') for i in range(len(sub_intervals))]
+        symbols = []
+        for i, sub_interval in enumerate(sub_intervals):
+            if isinstance(sub_interval, int | float | Interval):
+                symbols.append(sym.Symbol(f'x{i}'))
+            elif isinstance(sub_interval, IntervalMatrix):
+                symbols.append(sym.MatrixSymbol(f'X{i}', sub_interval.shape[0], sub_interval.shape[1]))
         root_expression = expression.func(*symbols)
         custom_modules = [
             {
-            'sin': interval.Interval.sin,
-            'cos': interval.Interval.cos,
-            'exp': interval.Interval.exp,
-            'ln': interval.Interval.ln,
-            'log': interval.Interval.ln,
+            'sin': Interval.sin,
+            'cos': Interval.cos,
+            'exp': Interval.exp,
+            'ln': Interval.ln,
+            'log': Interval.ln,
+            'matrix_power': matrix_power
             },
             'numpy'
         ]
