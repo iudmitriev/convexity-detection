@@ -4,23 +4,34 @@ import interval
 
 
 class BaseConvexDetector:
-    def is_convex(self, expr, symbol_space=None, **kwargs):
+    def convexity_detection(self, expr, symbol_space=None, **kwargs):
+        '''
+        Returns True if convex
+                False if concave
+                None if neither or nothing can be determined
+        '''
         if isinstance(expr, str):
             expr = self.parse_str(expr, **kwargs)
-        return self._is_convex_expression(expr, symbol_space=symbol_space)
+        return self._convexity_detection_expression(expr, symbol_space=symbol_space)
 
     def parse_str(self, string, **kwargs):
         msg = f'method \"parse_str\" not implemented for {self.__class__.__name__}'
         raise NotImplementedError(msg)
 
-    def _is_convex_expression(self, expression, symbol_space=None):
+    def _convexity_detection_expression(self, expression, symbol_space=None):
         msg = f'method \"_is_convex_expression\" not implemented for {self.__class__.__name__}'
         raise NotImplementedError(msg)
 
 
 class DCPConvexDetector(BaseConvexDetector):
-    def _is_convex_expression(self, expression, symbol_space=None):
-        return expression.is_dcp()
+    def _convexity_detection_expression(self, expression, symbol_space=None):
+        is_convex = expression.is_dcp()
+        if is_convex:
+            return True
+        is_concave = (-expression).is_dcp()
+        if is_concave:
+            return False
+        return None
 
 
 class HessianConvexDetector(BaseConvexDetector):
@@ -29,13 +40,19 @@ class HessianConvexDetector(BaseConvexDetector):
             return sym.parsing.sympy_parser.parse_expr(string, evaluate=False)
         return sym.parsing.sympy_parser.parse_expr(string, local_dict=matrix_symbol_dict, evaluate=False)
 
-    def _is_convex_expression(self, expression, symbol_space=None):
+    def _convexity_detection_expression(self, expression, symbol_space=None):
         symbols = list(expression.free_symbols)
         if len(symbols) != 1:
             raise ValueError(f'Expression should have only one named variable (which can be matrix), got {symbols}')
         second_diff = expression.diff(symbols[0]).diff(symbols[0])
         value_interval = self._get_interval(second_diff, symbol_space=symbol_space)
-        return value_interval.isIn(interval.Interval([0, float('inf')]))
+        is_convex = value_interval.isIn(interval.Interval([0, float('inf')]))
+        is_concave = value_interval.isIn(interval.Interval([float('-inf'), 0]))
+        if is_convex:
+            return True
+        if is_concave:
+            return False
+        return None
 
     @abstractmethod
     def _match_atomic(self, atomic_expr, symbol_space=None):
