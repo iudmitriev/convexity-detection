@@ -42,10 +42,19 @@ class HessianConvexDetector(BaseConvexDetector):
         return sym.parsing.sympy_parser.parse_expr(string, local_dict=matrix_symbol_dict, evaluate=False)
 
     def _convexity_detection_expression(self, expression, symbol_space=None):
-        symbols = list(expression.free_symbols)
-        if len(symbols) != 1:
-            raise ValueError(f'Expression should have only one named variable (which can be matrix), got {symbols}')
-        second_diff = sym.diff(sym.diff(expression, symbols[0]), symbols[0])
+        symbols = expression.free_symbols
+        probably_variables = {'x', 'X', 'y', 'Y', 'z', 'Z'}
+        variables = list(set(map(str, symbols)) & probably_variables)
+
+        if len(variables) != 1:
+            raise ValueError(f'Expression should have only one named variable (which can be matrix), detected {symbols}')
+        for symbol in symbols:
+            if str(symbol) == variables[0]:
+                variable = symbol
+                break
+        else:
+            raise ValueError(f'Can not detect variable')
+        second_diff = sym.diff(sym.diff(expression, variable), variable)
         return self._positivity_detection(second_diff, symbol_space)
 
     def _positivity_detection(self, expression, symbol_space=None):

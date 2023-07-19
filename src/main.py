@@ -17,6 +17,7 @@ if __name__ == '__main__':
     func = X.T * X + 2 * sym.Identity(1)
     assert convex_detector._convexity_detection_expression(func)
     assert convex_detector._match_atomic(X.T * X) == Interval([0, float('inf')])
+    assert convex_detector.convexity_detection(func)
 
     Y = sym.MatrixSymbol('Y', 3, 3)
     interval_matrix = convex_detector._get_interval(2 * Y, symbol_space={'Y': IntervalMatrix(shape=(3, 3),
