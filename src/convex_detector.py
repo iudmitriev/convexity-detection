@@ -101,7 +101,7 @@ class HessianConvexDetector(BaseConvexDetector):
 
         symbols = []
         for i, sub_interval in enumerate(sub_intervals):
-            if isinstance(sub_interval, int | float | Interval):
+            if isinstance(sub_interval, (int, float, Interval)):
                 symbols.append(sym.Symbol(f'x{i}'))
             elif isinstance(sub_interval, IntervalMatrix):
                 symbols.append(sym.MatrixSymbol(f'X{i}', sub_interval.shape[0], sub_interval.shape[1]))

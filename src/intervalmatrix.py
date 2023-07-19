@@ -101,7 +101,7 @@ class IntervalMatrix:
             values = self.data.__mul__(other)
         else:
             values = None
-        if isinstance(other, int | float | Interval):
+        if isinstance(other, (int, float, Interval)):
             interval = self.interval.__mul__(other)
             return IntervalMatrix(values=values, psd_interval=interval)
         return IntervalMatrix(values=values, is_psd=None)
@@ -111,7 +111,7 @@ class IntervalMatrix:
             values = self.data.__rmul__(other)
         else:
             values = None
-        if isinstance(other, int | float | Interval):
+        if isinstance(other, (int, float, Interval)):
             interval = self.interval.__rmul__(other)
             return IntervalMatrix(values=values, psd_interval=interval)
         return IntervalMatrix(values=values, is_psd=None)
@@ -130,7 +130,7 @@ class IntervalMatrix:
             values = self.data.dot(other)
         else:
             values = None
-        if isinstance(other, int | float | Interval):
+        if isinstance(other, (int, float, Interval)):
             interval = self.interval.__mul__(other)
             return IntervalMatrix(values=values, psd_interval=interval)
         return IntervalMatrix(values=values, is_psd=None)
