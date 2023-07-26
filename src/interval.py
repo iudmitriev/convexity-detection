@@ -1,3 +1,10 @@
+"""
+Additional methods:
+
+sign
+__abs__
+"""
+
 from decimal import *
 
 
@@ -355,6 +362,13 @@ class Interval:
         self.x.__setitem__(key, Decimal(value))
         self.__correctize()
         Interval.__loadcontext()
+
+    def __abs__(self):
+        if self > 0:
+            return Interval(self.x.copy())
+        if self < 0:
+            return -Interval(self.x.copy())
+        return Interval([0, max(-self[0], self[1])])
 
     def __neg__(self):
         ninterval = Interval(self.x)

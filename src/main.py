@@ -1,6 +1,7 @@
 from convex_detector import *
 
 import sympy as sym
+import numpy as np
 
 if __name__ == '__main__':
     convex_detector = HessianConvexDetector()
@@ -27,4 +28,12 @@ if __name__ == '__main__':
     expr = 'X.T * X + 2 * I'
     matrix_symbol_dict = {'X': sym.MatrixSymbol('X', 5, 1), 'I': sym.Identity(1)}
     assert convex_detector.convexity_detection(expr, matrix_symbol_dict=matrix_symbol_dict)
+
+    values = np.array([
+        [Interval([1, 1]), Interval([1, 1])],
+        [Interval([0, 0]), Interval([1, 1])]
+    ])
+    matrix = IntervalMatrix(values=values)
+    assert matrix.is_gershgorin_convex()
+
     print('Finished')

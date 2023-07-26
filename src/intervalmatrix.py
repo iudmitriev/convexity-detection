@@ -3,7 +3,6 @@ import numpy as np
 
 
 class IntervalMatrix:
-    # TODO: add self.data support
     def __init__(self, shape=None, values=None, is_psd=None, psd_interval=None):
         if shape is not None:
             assert len(shape) == 2, f'Only matrices with two dimensions are supported, got shape = {shape}'
@@ -135,6 +134,30 @@ class IntervalMatrix:
             return IntervalMatrix(values=values, psd_interval=interval)
         return IntervalMatrix(values=values, is_psd=None)
 
+    def is_gershgorin_convex(self):
+        gershgorin_lower_bound = get_gershgorin_lower_bound(self.data)
+        if gershgorin_lower_bound >= 0:
+            return True
+        gershgorin_upper_bound = get_gershgorin_upper_bound(self.data)
+        if gershgorin_upper_bound <= 0:
+            return False
+        return None
+
+
+def get_gershgorin_lower_bound(matrix_of_intervals):
+    abs_matrix = np.abs(matrix_of_intervals)
+    np.fill_diagonal(abs_matrix, 0)
+    diagonal = matrix_of_intervals.diagonal()
+    interval_of_bounds = diagonal - abs_matrix.sum(axis=0)
+    return np.min([interval[0] for interval in interval_of_bounds])
+
+
+def get_gershgorin_upper_bound(matrix_of_intervals):
+    abs_matrix = np.abs(matrix_of_intervals)
+    np.fill_diagonal(abs_matrix, 0)
+    interval_of_bounds = matrix_of_intervals.diagonal() + abs_matrix.sum(axis=0)
+    return np.max([interval[1] for interval in interval_of_bounds])
+
 
 def matrix_power(matrix, power):
     if matrix.data is not None and power[0] == power[1]:
@@ -142,4 +165,3 @@ def matrix_power(matrix, power):
     else:
         values = None
     return IntervalMatrix(values=values, is_psd=None)
-
