@@ -1,7 +1,6 @@
 from interval import Interval
 import numpy as np
 
-
 class IntervalMatrix:
     def __init__(self, shape=None, values=None, is_psd=None, psd_interval=None):
         if shape is not None:
@@ -32,6 +31,15 @@ class IntervalMatrix:
                 self.interval = Interval([0, float('inf')])
             else:
                 self.interval = Interval([float('-inf'), 0])
+
+    @staticmethod
+    def value_to_interval_matrix(value):
+        if isinstance(value, IntervalMatrix):
+            return value
+        if isinstance(value, Interval):
+            return IntervalMatrix(values=np.array([value]))
+        if isinstance(value, (int, float)):
+            return IntervalMatrix(values=np.array([Interval.valueToInterval(value)]))
 
     @property
     def T(self):
@@ -64,40 +72,46 @@ class IntervalMatrix:
         self.interval = -self.interval
 
     def __add__(self, other):
+        other = self.value_to_interval_matrix(other)
         if self.data is not None:
-            values = self.data.__add__(other)
+            values = self.data.__add__(other.data)
         else:
             values = None
-        interval = self.interval .__add__(other)
+        interval = self.interval.__add__(other.interval)
         return IntervalMatrix(values=values, psd_interval=interval)
 
     def __radd__(self, other):
+        other = self.value_to_interval_matrix(other)
         if self.data is not None:
-            values = self.data.__radd__(other)
+            values = self.data.__radd__(other.data)
         else:
             values = None
-        interval = self.interval.__radd__(other)
+        interval = self.interval.__radd__(other.interval)
         return IntervalMatrix(values=values, psd_interval=interval)
 
     def __sub__(self, other):
+        other = self.value_to_interval_matrix(other)
         if self.data is not None:
-            values = self.data.__sub__(other)
+            values = self.data.__sub__(other.data)
         else:
             values = None
-        interval = self.interval.__sub__(other)
+        interval = self.interval.__sub__(other.interval)
         return IntervalMatrix(values=values, psd_interval=interval)
 
     def __rsub__(self, other):
+        other = self.value_to_interval_matrix(other)
         if self.data is not None:
-            values = self.data.__rsub__(other)
+            values = self.data.__rsub__(other.data)
         else:
             values = None
-        interval = self.interval.__rsub__(other)
+
+        interval = self.interval.__rsub__(other.interval)
         return IntervalMatrix(values=values, psd_interval=interval)
 
     def __mul__(self, other):
+        other = self.value_to_interval_matrix(other)
         if self.data is not None:
-            values = self.data.__mul__(other)
+            values = self.data.__mul__(other.data)
         else:
             values = None
         if isinstance(other, (int, float, Interval)):
@@ -107,7 +121,7 @@ class IntervalMatrix:
 
     def __rmul__(self, other):
         if self.data is not None:
-            values = self.data.__rmul__(other)
+            values = self.data.__rmul__(self.value_to_interval_matrix(other).data)
         else:
             values = None
         if isinstance(other, (int, float, Interval)):
@@ -116,8 +130,6 @@ class IntervalMatrix:
         return IntervalMatrix(values=values, is_psd=None)
 
     def __pow__(self, power):
-        if power[0] != power[1]:
-            values = None
         if self.data is not None and power[0] == power[1]:
             values = self.data.__pow__(power)
         else:
@@ -126,13 +138,19 @@ class IntervalMatrix:
 
     def dot(self, other):
         if self.data is not None:
-            values = self.data.dot(other)
+            if isinstance(other, (int, float, Interval)):
+                values = self.data.dot(Interval.valueToInterval(other))
+            else:
+                values = self.data.dot(self.value_to_interval_matrix(other).data)
         else:
             values = None
         if isinstance(other, (int, float, Interval)):
             interval = self.interval.__mul__(other)
             return IntervalMatrix(values=values, psd_interval=interval)
         return IntervalMatrix(values=values, is_psd=None)
+
+    def sign(self):
+        return self.interval.sign()
 
     def is_gershgorin_convex(self):
         gershgorin_lower_bound = get_gershgorin_lower_bound(self.data)

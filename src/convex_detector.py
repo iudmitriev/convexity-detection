@@ -5,7 +5,7 @@ from intervalmatrix import IntervalMatrix, matrix_power
 
 
 class BaseConvexDetector:
-    def convexity_detection(self, expr, symbol_space=None, **kwargs):
+    def convexity_detection_str(self, expr, symbol_space=None, **kwargs):
         '''
         Returns True if convex
                 False if concave
@@ -13,19 +13,19 @@ class BaseConvexDetector:
         '''
         if isinstance(expr, str):
             expr = self.parse_str(expr, **kwargs)
-        return self._convexity_detection_expression(expr, symbol_space=symbol_space)
+        return self.convexity_detection_expression(expr, symbol_space=symbol_space)
 
     def parse_str(self, string, **kwargs):
         msg = f'method \"parse_str\" not implemented for {self.__class__.__name__}'
         raise NotImplementedError(msg)
 
-    def _convexity_detection_expression(self, expression, symbol_space=None):
+    def convexity_detection_expression(self, expression, symbol_space=None):
         msg = f'method \"_is_convex_expression\" not implemented for {self.__class__.__name__}'
         raise NotImplementedError(msg)
 
 
 class DCPConvexDetector(BaseConvexDetector):
-    def _convexity_detection_expression(self, expression, symbol_space=None):
+    def convexity_detection_expression(self, expression, symbol_space=None):
         is_convex = expression.is_dcp()
         if is_convex:
             return True
@@ -41,7 +41,7 @@ class HessianConvexDetector(BaseConvexDetector):
             return sym.parsing.sympy_parser.parse_expr(string, evaluate=False)
         return sym.parsing.sympy_parser.parse_expr(string, local_dict=matrix_symbol_dict, evaluate=False)
 
-    def _convexity_detection_expression(self, expression, symbol_space=None):
+    def convexity_detection_expression(self, expression, symbol_space=None):
         symbols = expression.free_symbols
         probably_variables = {'x', 'X', 'y', 'Y', 'z', 'Z'}
         variables = list(set(map(str, symbols)) & probably_variables)
