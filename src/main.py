@@ -28,14 +28,13 @@ def TestMultiVariable(convex_detector):
     assert convex_detector.convexity_detection_str(expr, matrix_symbol_dict=matrix_symbol_dict)
 
     expr = 'X.T * A * X'
-    vectorized_to_interval = np.vectorize(Interval.valueToInterval)
     matrix_symbol_dict = {'X': sym.MatrixSymbol('X', 10, 1), 'A': sym.MatrixSymbol('A', 10, 10)}
 
     vectorized_to_interval = np.vectorize(Interval.valueToInterval)
     values = vectorized_to_interval(np.diag(np.arange(1, 11)).astype(object))
     symbol_space = {'A': IntervalMatrix(values=values)}
 
-    assert convex_detector.convexity_detection_str(expr, matrix_symbol_dict=matrix_symbol_dict, symbol_space=symbol_space) is None
+    assert convex_detector.convexity_detection_str(expr, matrix_symbol_dict=matrix_symbol_dict, symbol_space=symbol_space)
 
     print('Finished multi variable')
 
