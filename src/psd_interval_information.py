@@ -125,8 +125,36 @@ class PsdIntervalInformation:
 
     def __pow__(self, power):
         if self.is_vector():
-            return PsdIntervalInformation(shape=self.shape, interval=self.interval ** power)
+            return PsdIntervalInformation(shape=self.shape, interval=self.interval ** power.interval)
         return PsdIntervalInformation(shape=self.shape, interval=None, is_psd=None)
+
+    @staticmethod
+    def sin(psd_interval):
+        if psd_interval.is_vector():
+            return PsdIntervalInformation(shape=psd_interval.shape, interval=Interval.sin(psd_interval.interval))
+        return PsdIntervalInformation(shape=psd_interval.shape, interval=None)
+
+    @staticmethod
+    def cos(psd_interval):
+        if psd_interval.is_vector():
+            return PsdIntervalInformation(shape=psd_interval.shape, interval=Interval.cos(psd_interval.interval))
+        return PsdIntervalInformation(shape=psd_interval.shape, interval=None)
+
+    @staticmethod
+    def exp(psd_interval):
+        if psd_interval.is_vector():
+            return PsdIntervalInformation(shape=psd_interval.shape, interval=Interval.exp(psd_interval.interval))
+        return PsdIntervalInformation(shape=psd_interval.shape, interval=None)
+
+    @staticmethod
+    def ln(psd_interval):
+        if psd_interval.is_vector():
+            return PsdIntervalInformation(shape=psd_interval.shape, interval=Interval.ln(psd_interval.interval))
+        return PsdIntervalInformation(shape=psd_interval.shape, interval=None)
+
+    @staticmethod
+    def log(psd_interval):
+        return PsdIntervalInformation.ln(psd_interval)
 
     def dot(self, other):
         """
@@ -156,3 +184,16 @@ class PsdIntervalInformation:
         if self.interval.isIn(Interval([float('-inf'), 0])):
             return False
         return None
+
+    @staticmethod
+    def matrix_power(psd_interval, power):
+        if not power.is_scalar():
+            raise ValueError('Only scalar powers are supported')
+
+        if psd_interval.is_scalar():
+            return PsdIntervalInformation(shape=psd_interval.shape, interval=psd_interval.interval ** power.interval)
+
+        if psd_interval.shape[0] != psd_interval.shape[1]:
+            msg = f'Matrix should be square in PsdIntervalInformation.matrix_power, got {psd_interval.shape}'
+            raise ValueError(msg)
+        return PsdIntervalInformation(shape=psd_interval.shape, interval=None)
