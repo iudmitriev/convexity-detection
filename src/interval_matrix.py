@@ -14,6 +14,9 @@ class IntervalMatrix:
         if values is not None:
             self.values = values
             self.shape = self.values.shape
+
+            if len(self.shape) != 2:
+                raise ValueError(f'Incorrect shape, got {self.shape}')
         elif shape is not None:
             self.values = np.empty(shape, dtype=object)
             self.values[:, :] = Interval([float('-inf'), float('inf')])
@@ -33,6 +36,9 @@ class IntervalMatrix:
     @property
     def T(self):
         return IntervalMatrix(values=self.values.T)
+
+    def is_scalar(self):
+        return self.shape == (1, 1)
 
     def __str__(self):
         if self.shape == (1, 1):
@@ -108,6 +114,8 @@ class IntervalMatrix:
         return IntervalMatrix.ln(interval_matrix)
 
     def dot(self, other):
+        if self.is_scalar() or other.is_scalar():
+            return self * other
         other = IntervalMatrix.value_to_interval_matrix(other)
         return IntervalMatrix(values=self.values.dot(other.values))
 
@@ -139,7 +147,7 @@ class IntervalMatrix:
         """
         Return identity matrix of size n x n
         """
-        return IntervalMatrix(values=np.diag(np.full(shape=(n,), value=Interval([1, 1]), dtype=object)))
+        return IntervalMatrix(values=np.diag(np.full(shape=(n,), fill_value=Interval([1, 1]), dtype=object)))
 
 
 def get_gershgorin_lower_bound(matrix_of_intervals):

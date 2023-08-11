@@ -16,12 +16,16 @@ class IntervalMatrixWithPsdInterval:
         if is_gershgorin_psd is not None and self.interval.sign() is None:
             self.interval = PsdIntervalInformation(is_psd=is_gershgorin_psd)
 
+    @property
+    def shape(self):
+        return self.matrix.shape
+
     @staticmethod
     def value_to_interval_matrix_with_psd_interval(value):
         if isinstance(value, IntervalMatrixWithPsdInterval):
             return value
         if isinstance(value, (int, float, Interval)):
-            matrix = IntervalMatrix.value_to_matrix_of_intervals(value)
+            matrix = IntervalMatrix.value_to_interval_matrix(value)
             psd_interval = PsdIntervalInformation.value_to_psd_interval(value)
             return IntervalMatrixWithPsdInterval(matrix=matrix, psd_interval=psd_interval)
         if isinstance(value, PsdIntervalInformation):
@@ -35,6 +39,9 @@ class IntervalMatrixWithPsdInterval:
     @property
     def T(self):
         return IntervalMatrixWithPsdInterval(matrix=self.matrix.T, psd_interval=self.interval)
+
+    def is_scalar(self):
+        return self.matrix.is_scalar()
 
     def __str__(self):
         return str(self.matrix) + '\nWith interval:\n' + str(self.interval)
@@ -64,8 +71,8 @@ class IntervalMatrixWithPsdInterval:
         return self * other
 
     def __pow__(self, power):
-        return IntervalMatrixWithPsdInterval(matrix=self.matrix ** power,
-                                             psd_interval=self.interval ** power)
+        return IntervalMatrixWithPsdInterval(matrix=self.matrix ** power.matrix,
+                                             psd_interval=self.interval ** power.interval)
 
     def dot(self, other):
         return IntervalMatrixWithPsdInterval(matrix=self.matrix.dot(other.matrix),
@@ -82,3 +89,27 @@ class IntervalMatrixWithPsdInterval:
         matrix = IntervalMatrix.matrix_power(matrix_with_psd_interval.matrix, power)
         psd_interval = PsdIntervalInformation.matrix_power(matrix_with_psd_interval.interval, power)
         return IntervalMatrixWithPsdInterval(matrix=matrix, psd_interval=psd_interval)
+
+    @staticmethod
+    def sin(matrix_with_psd_interval):
+        return IntervalMatrixWithPsdInterval(matrix=IntervalMatrix.sin(matrix_with_psd_interval.matrix),
+                                             psd_interval=PsdIntervalInformation.sin(matrix_with_psd_interval.interval))
+
+    @staticmethod
+    def cos(matrix_with_psd_interval):
+        return IntervalMatrixWithPsdInterval(matrix=IntervalMatrix.cos(matrix_with_psd_interval.matrix),
+                                             psd_interval=PsdIntervalInformation.cos(matrix_with_psd_interval.interval))
+
+    @staticmethod
+    def exp(matrix_with_psd_interval):
+        return IntervalMatrixWithPsdInterval(matrix=IntervalMatrix.exp(matrix_with_psd_interval.matrix),
+                                             psd_interval=PsdIntervalInformation.exp(matrix_with_psd_interval.interval))
+
+    @staticmethod
+    def ln(matrix_with_psd_interval):
+        return IntervalMatrixWithPsdInterval(matrix=IntervalMatrix.ln(matrix_with_psd_interval.matrix),
+                                             psd_interval=PsdIntervalInformation.ln(matrix_with_psd_interval.interval))
+
+    @staticmethod
+    def log(matrix_with_psd_interval):
+        return IntervalMatrixWithPsdInterval.ln(matrix_with_psd_interval)

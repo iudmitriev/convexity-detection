@@ -160,7 +160,7 @@ class PsdIntervalInformation:
         """
         Matrix multiplication
         """
-        if self.is_scalar() or other.is_scalar:
+        if self.is_scalar() or other.is_scalar():
             return self * other
 
         if self.shape[1] != other.shape[0]:
