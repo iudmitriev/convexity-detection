@@ -37,7 +37,7 @@ class PsdIntervalInformation:
         if interval is None:
             if is_psd is None:
                 self.interval = Interval([float('-inf'), float('inf')])
-            if is_psd:
+            elif is_psd:
                 self.interval = Interval([0, float('inf')])
             else:
                 self.interval = Interval([float('-inf'), 0])
@@ -197,3 +197,7 @@ class PsdIntervalInformation:
             msg = f'Matrix should be square in PsdIntervalInformation.matrix_power, got {psd_interval.shape}'
             raise ValueError(msg)
         return PsdIntervalInformation(shape=psd_interval.shape, interval=None)
+
+    def __eq__(self, other):
+        other = PsdIntervalInformation.value_to_psd_interval(other)
+        return self.shape == other.shape and self.interval == other.interval
