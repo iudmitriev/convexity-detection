@@ -22,7 +22,7 @@ class IntervalMatrix:
             raise ValueError(f'Both values and shape are None, failed to create MatrixOfIntervals')
 
     @staticmethod
-    def value_to_matrix_of_intervals(value):
+    def value_to_interval_matrix(value):
         if isinstance(value, IntervalMatrix):
             return value
         if isinstance(value, Interval):
@@ -54,37 +54,61 @@ class IntervalMatrix:
         return IntervalMatrix(values=-self.values)
 
     def __add__(self, other):
-        other = IntervalMatrix.value_to_matrix_of_intervals(other)
+        other = IntervalMatrix.value_to_interval_matrix(other)
         return IntervalMatrix(values=self.values + other.values)
 
     def __radd__(self, other):
-        other = IntervalMatrix.value_to_matrix_of_intervals(other)
+        other = IntervalMatrix.value_to_interval_matrix(other)
         return IntervalMatrix(values=self.values + other.values)
 
     def __sub__(self, other):
-        other = IntervalMatrix.value_to_matrix_of_intervals(other)
+        other = IntervalMatrix.value_to_interval_matrix(other)
         return IntervalMatrix(values=self.values - other.values)
 
     def __rsub__(self, other):
-        other = IntervalMatrix.value_to_matrix_of_intervals(other)
+        other = IntervalMatrix.value_to_interval_matrix(other)
         return IntervalMatrix(values=other.values - self.values)
 
     def __mul__(self, other):
-        other = IntervalMatrix.value_to_matrix_of_intervals(other)
+        other = IntervalMatrix.value_to_interval_matrix(other)
         return IntervalMatrix(values=self.values * other.values)
 
     def __rmul__(self, other):
-        other = IntervalMatrix.value_to_matrix_of_intervals(other)
+        other = IntervalMatrix.value_to_interval_matrix(other)
         return IntervalMatrix(values=self.values * other.values)
 
     def __pow__(self, power):
-        power = IntervalMatrix.value_to_matrix_of_intervals(power)
+        power = IntervalMatrix.value_to_interval_matrix(power)
         if power.shape != (1, 1):
             raise ValueError(f'Only scalar powers are supported, got shape = {power.shape}')
         return IntervalMatrix(values=self.values ** power.values[0, 0])
 
+    @staticmethod
+    def sin(interval_matrix):
+        vec_func = np.vectorize(Interval.sin)
+        return IntervalMatrix(values=vec_func(interval_matrix.values))
+
+    @staticmethod
+    def cos(interval_matrix):
+        vec_func = np.vectorize(Interval.cos)
+        return IntervalMatrix(values=vec_func(interval_matrix.values))
+
+    @staticmethod
+    def exp(interval_matrix):
+        vec_func = np.vectorize(Interval.exp)
+        return IntervalMatrix(values=vec_func(interval_matrix.values))
+
+    @staticmethod
+    def ln(interval_matrix):
+        vec_func = np.vectorize(Interval.ln)
+        return IntervalMatrix(values=vec_func(interval_matrix.values))
+
+    @staticmethod
+    def log(interval_matrix):
+        return IntervalMatrix.ln(interval_matrix)
+
     def dot(self, other):
-        other = IntervalMatrix.value_to_matrix_of_intervals(other)
+        other = IntervalMatrix.value_to_interval_matrix(other)
         return IntervalMatrix(values=self.values.dot(other.values))
 
     def sign(self):
@@ -101,7 +125,7 @@ class IntervalMatrix:
 
     @staticmethod
     def matrix_power(matrix, power):
-        power = IntervalMatrix.value_to_matrix_of_intervals(power)
+        power = IntervalMatrix.value_to_interval_matrix(power)
         if power.shape != (1, 1):
             raise ValueError(f'Only scalar powers are supported, got shape = {power.shape}')
         power = power.values[0, 0]
@@ -109,6 +133,13 @@ class IntervalMatrix:
             raise ValueError(f'Only scalar powers are supported, got interval: {power}')
         power = power[0]
         return IntervalMatrix(values=np.linalg.matrix_power(matrix.values, power))
+
+    @staticmethod
+    def eye(n):
+        """
+        Return identity matrix of size n x n
+        """
+        return IntervalMatrix(values=np.diag(np.full(shape=(n,), value=Interval([1, 1]), dtype=object)))
 
 
 def get_gershgorin_lower_bound(matrix_of_intervals):
