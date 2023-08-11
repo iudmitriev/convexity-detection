@@ -1,6 +1,7 @@
 from interval import Interval
 import numpy as np
 
+
 class IntervalMatrix:
     def __init__(self, shape=None, values=None, is_psd=None, psd_interval=None):
         if shape is not None:
@@ -68,8 +69,10 @@ class IntervalMatrix:
 
     def __neg__(self):
         if self.data is not None:
-            self.data = -self.data
-        self.interval = -self.interval
+            values = -self.data
+        else:
+            values = None
+        return IntervalMatrix(values=values, psd_interval=-self.interval)
 
     def __add__(self, other):
         other = self.value_to_interval_matrix(other)
