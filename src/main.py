@@ -12,12 +12,12 @@ def TestSingleVariable(convex_detector):
     print('Finished TestSingleVariable')
 
 
-def TestInterval(convex_detector):
+def TestSingleVariableInterval(convex_detector):
     x = sym.Symbol('x')
     assert convex_detector._get_interval(2 - x, symbol_values={'x': Interval([0, 1])}) == Interval([1, 2])
     assert convex_detector._get_interval(2 - x ** 2, symbol_values={'x': Interval([0, 1])}) == Interval([1, 2])
     assert convex_detector._get_interval(2 - 2 * x, symbol_values={'x': Interval([0, 1])}) == Interval([0, 2])
-    print('Finished TestInterval')
+    print('Finished TestSingleVariableInterval')
 
 
 def TestMultiVariable(convex_detector):
@@ -81,6 +81,7 @@ if __name__ == '__main__':
     hessian_convex_detector = PsdIntervalConvexDetector()
 
     TestSingleVariable(hessian_convex_detector)
+    TestSingleVariableInterval(hessian_convex_detector)
     TestMultiVariable(hessian_convex_detector)
     TestMultiVariableInternals(hessian_convex_detector)
 
