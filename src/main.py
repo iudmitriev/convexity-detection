@@ -14,9 +14,9 @@ def TestSingleVariable(convex_detector):
 
 def TestSingleVariableInterval(convex_detector):
     x = sym.Symbol('x')
-    assert convex_detector._get_interval(2 - x, symbol_values={'x': Interval([0, 1])}) == Interval([1, 2])
-    assert convex_detector._get_interval(2 - x ** 2, symbol_values={'x': Interval([0, 1])}) == Interval([1, 2])
-    assert convex_detector._get_interval(2 - 2 * x, symbol_values={'x': Interval([0, 1])}) == Interval([0, 2])
+    assert convex_detector._get_interval(2 - x, symbol_values={'x': Interval([0, 1])}).interval == Interval([1, 2])
+    assert convex_detector._get_interval(2 - x ** 2, symbol_values={'x': Interval([0, 1])}).interval == Interval([1, 2])
+    assert convex_detector._get_interval(2 - 2 * x, symbol_values={'x': Interval([0, 1])}).interval == Interval([0, 2])
     print('Finished TestSingleVariableInterval')
 
 
@@ -34,9 +34,12 @@ def TestMultiVariable(convex_detector):
 
     vectorized_to_interval = np.vectorize(Interval.valueToInterval)
     values = vectorized_to_interval(np.diag(np.arange(1, 11)).astype(object))
-    symbol_space = {'A': IntervalMatrix(values=values)}
 
+    symbol_space = {'A': PsdIntervalInformation(shape=(10, 10), is_psd=True)}
     assert convex_detector.convexity_detection_str(expr, matrix_symbol_dict=matrix_symbol_dict, symbol_values=symbol_space)
+
+    symbol_space = {'A': PsdIntervalInformation(shape=(10, 10))}
+    assert convex_detector.convexity_detection_str(expr, matrix_symbol_dict=matrix_symbol_dict, symbol_values=symbol_space) is None
 
     print('Finished TestMultiVariable')
 
@@ -51,7 +54,7 @@ def TestMultiVariableInternals(convex_detector):
     assert convex_detector.convexity_detection_str(func)
 
     Y = sym.MatrixSymbol('Y', 3, 3)
-    interval_matrix = convex_detector._get_interval(2 * Y, symbol_values={'Y': IntervalMatrix(shape=(3, 3), is_psd=True)})
+    interval_matrix = convex_detector._get_interval(2 * Y, symbol_values={'Y': PsdIntervalInformation(shape=(3, 3), is_psd=True)})
     assert interval_matrix.interval == Interval([0, float('inf')])
     print('Finished TestMultiVariableInternals')
 
@@ -78,12 +81,13 @@ def TestGershgorin():
 
 
 if __name__ == '__main__':
-    hessian_convex_detector = PsdIntervalConvexDetector()
+    psd_interval_convex_detector = PsdIntervalConvexDetector()
 
-    TestSingleVariable(hessian_convex_detector)
-    TestSingleVariableInterval(hessian_convex_detector)
-    TestMultiVariable(hessian_convex_detector)
-    TestMultiVariableInternals(hessian_convex_detector)
+    TestSingleVariable(psd_interval_convex_detector)
+    TestSingleVariableInterval(psd_interval_convex_detector)
+
+    TestMultiVariable(psd_interval_convex_detector)
+    TestMultiVariableInternals(psd_interval_convex_detector)
 
     TestGershgorin()
 
