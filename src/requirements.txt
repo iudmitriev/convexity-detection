@@ -1,2 +1,3 @@
 cvxpy
 sympy
+numpy
