@@ -66,7 +66,7 @@ class HessianConvexDetector(BaseConvexDetector):
         if isinstance(atomic_expr, sym.core.numbers.Integer):
             return Interval.valueToInterval(int(atomic_expr))
         if isinstance(atomic_expr, sym.core.numbers.Float):
-            return Interval.valueToInterval(int(atomic_expr))
+            return Interval.valueToInterval(float(atomic_expr))
         if isinstance(atomic_expr, sym.core.symbol.Symbol):
             if (symbol_space is not None) and (str(atomic_expr) in symbol_space):
                 return symbol_space[str(atomic_expr)]
