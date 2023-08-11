@@ -2,7 +2,7 @@ from interval import Interval
 import numpy as np
 
 
-class MatrixOfIntervals:
+class IntervalMatrix:
     """
         Matrix, each element of which is an interval
 
@@ -23,16 +23,16 @@ class MatrixOfIntervals:
 
     @staticmethod
     def value_to_matrix_of_intervals(value):
-        if isinstance(value, MatrixOfIntervals):
+        if isinstance(value, IntervalMatrix):
             return value
         if isinstance(value, Interval):
-            return MatrixOfIntervals(values=np.array([[value]]))
+            return IntervalMatrix(values=np.array([[value]]))
         if isinstance(value, (int, float)):
-            return MatrixOfIntervals(values=np.array([[Interval.valueToInterval(value)]]))
+            return IntervalMatrix(values=np.array([[Interval.valueToInterval(value)]]))
 
     @property
     def T(self):
-        return MatrixOfIntervals(values=self.values.T)
+        return IntervalMatrix(values=self.values.T)
 
     def __str__(self):
         if self.shape == (1, 1):
@@ -51,41 +51,41 @@ class MatrixOfIntervals:
         return result
 
     def __neg__(self):
-        return MatrixOfIntervals(values=-self.values)
+        return IntervalMatrix(values=-self.values)
 
     def __add__(self, other):
-        other = MatrixOfIntervals.value_to_matrix_of_intervals(other)
-        return MatrixOfIntervals(values=self.values + other.values)
+        other = IntervalMatrix.value_to_matrix_of_intervals(other)
+        return IntervalMatrix(values=self.values + other.values)
 
     def __radd__(self, other):
-        other = MatrixOfIntervals.value_to_matrix_of_intervals(other)
-        return MatrixOfIntervals(values=self.values + other.values)
+        other = IntervalMatrix.value_to_matrix_of_intervals(other)
+        return IntervalMatrix(values=self.values + other.values)
 
     def __sub__(self, other):
-        other = MatrixOfIntervals.value_to_matrix_of_intervals(other)
-        return MatrixOfIntervals(values=self.values - other.values)
+        other = IntervalMatrix.value_to_matrix_of_intervals(other)
+        return IntervalMatrix(values=self.values - other.values)
 
     def __rsub__(self, other):
-        other = MatrixOfIntervals.value_to_matrix_of_intervals(other)
-        return MatrixOfIntervals(values=other.values - self.values)
+        other = IntervalMatrix.value_to_matrix_of_intervals(other)
+        return IntervalMatrix(values=other.values - self.values)
 
     def __mul__(self, other):
-        other = MatrixOfIntervals.value_to_matrix_of_intervals(other)
-        return MatrixOfIntervals(values=self.values * other.values)
+        other = IntervalMatrix.value_to_matrix_of_intervals(other)
+        return IntervalMatrix(values=self.values * other.values)
 
     def __rmul__(self, other):
-        other = MatrixOfIntervals.value_to_matrix_of_intervals(other)
-        return MatrixOfIntervals(values=self.values * other.values)
+        other = IntervalMatrix.value_to_matrix_of_intervals(other)
+        return IntervalMatrix(values=self.values * other.values)
 
     def __pow__(self, power):
-        power = MatrixOfIntervals.value_to_matrix_of_intervals(power)
+        power = IntervalMatrix.value_to_matrix_of_intervals(power)
         if power.shape != (1, 1):
             raise ValueError(f'Only scalar powers are supported, got shape = {power.shape}')
-        return MatrixOfIntervals(values=self.values ** power.values[0, 0])
+        return IntervalMatrix(values=self.values ** power.values[0, 0])
 
     def dot(self, other):
-        other = MatrixOfIntervals.value_to_matrix_of_intervals(other)
-        return MatrixOfIntervals(values=self.values.dot(other.values))
+        other = IntervalMatrix.value_to_matrix_of_intervals(other)
+        return IntervalMatrix(values=self.values.dot(other.values))
 
     def sign(self):
         return self.is_gershgorin_convex()
@@ -98,6 +98,17 @@ class MatrixOfIntervals:
         if gershgorin_upper_bound <= 0:
             return False
         return None
+
+    @staticmethod
+    def matrix_power(matrix, power):
+        power = IntervalMatrix.value_to_matrix_of_intervals(power)
+        if power.shape != (1, 1):
+            raise ValueError(f'Only scalar powers are supported, got shape = {power.shape}')
+        power = power.values[0, 0]
+        if power[0] != power[1]:
+            raise ValueError(f'Only scalar powers are supported, got interval: {power}')
+        power = power[0]
+        return IntervalMatrix(values=np.linalg.matrix_power(matrix.values, power))
 
 
 def get_gershgorin_lower_bound(matrix_of_intervals):
@@ -113,14 +124,3 @@ def get_gershgorin_upper_bound(matrix_of_intervals):
     np.fill_diagonal(abs_matrix, 0)
     interval_of_bounds = matrix_of_intervals.diagonal() + abs_matrix.sum(axis=0)
     return np.max([interval[1] for interval in interval_of_bounds])
-
-
-def matrix_power(matrix, power):
-    power = MatrixOfIntervals.value_to_matrix_of_intervals(power)
-    if power.shape != (1, 1):
-        raise ValueError(f'Only scalar powers are supported, got shape = {power.shape}')
-    power = power.values[0, 0]
-    if power[0] != power[1]:
-        raise ValueError(f'Only scalar powers are supported, got interval: {power}')
-    power = power[0]
-    return MatrixOfIntervals(values=np.linalg.matrix_power(matrix.values, power))
