@@ -5,6 +5,7 @@ import numpy as np
 
 from interval import Interval
 
+
 def TestSingleVariable(convex_detector):
     assert convex_detector.convexity_detection_str('x * ln(x) + 1', symbol_values={'x': Interval([0, float('inf')])})
     assert convex_detector.convexity_detection_str('2 - x', symbol_values={'x': Interval([0, 1])})
