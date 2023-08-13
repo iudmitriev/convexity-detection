@@ -145,6 +145,9 @@ class SubstitutingHessianConvexDetector(HessianConvexDetector):
         for sub_tree in expression.args:
             sub_intervals.append(self._get_substitution(sub_tree, symbol_values=symbol_values))
 
+        return self._combine_intervals(expression, sub_intervals)
+
+    def _combine_intervals(self, expression, sub_intervals):
         symbols = []
         for i, sub_interval in enumerate(sub_intervals):
             if sub_interval.is_scalar():
