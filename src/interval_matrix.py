@@ -123,13 +123,27 @@ class IntervalMatrix:
         return self.is_gershgorin_convex()
 
     def is_gershgorin_convex(self):
-        gershgorin_lower_bound = get_gershgorin_lower_bound(self.values)
+        gershgorin_lower_bound = self._get_gershgorin_lower_bound()
         if gershgorin_lower_bound >= 0:
             return True
-        gershgorin_upper_bound = get_gershgorin_upper_bound(self.values)
+        gershgorin_upper_bound = self._get_gershgorin_upper_bound()
         if gershgorin_upper_bound <= 0:
             return False
         return None
+
+    def _get_gershgorin_lower_bound(self):
+        abs_matrix = np.abs(self.values)
+        np.fill_diagonal(abs_matrix, 0)
+        diagonal = self.values.diagonal()
+        interval_of_bounds = diagonal - abs_matrix.sum(axis=0)
+        return np.min([interval[0] for interval in interval_of_bounds])
+
+    def _get_gershgorin_upper_bound(self):
+        abs_matrix = np.abs(self.values)
+        np.fill_diagonal(abs_matrix, 0)
+        interval_of_bounds = self.values.diagonal() + abs_matrix.sum(axis=0)
+        return np.max([interval[1] for interval in interval_of_bounds])
+
 
     @staticmethod
     def matrix_power(matrix, power):
@@ -148,18 +162,3 @@ class IntervalMatrix:
         Return identity matrix of size n x n
         """
         return IntervalMatrix(values=np.diag(np.full(shape=(n,), fill_value=Interval([1, 1]), dtype=object)))
-
-
-def get_gershgorin_lower_bound(matrix_of_intervals):
-    abs_matrix = np.abs(matrix_of_intervals)
-    np.fill_diagonal(abs_matrix, 0)
-    diagonal = matrix_of_intervals.diagonal()
-    interval_of_bounds = diagonal - abs_matrix.sum(axis=0)
-    return np.min([interval[0] for interval in interval_of_bounds])
-
-
-def get_gershgorin_upper_bound(matrix_of_intervals):
-    abs_matrix = np.abs(matrix_of_intervals)
-    np.fill_diagonal(abs_matrix, 0)
-    interval_of_bounds = matrix_of_intervals.diagonal() + abs_matrix.sum(axis=0)
-    return np.max([interval[1] for interval in interval_of_bounds])
