@@ -2,8 +2,16 @@ from convex_detector import *
 
 import sympy as sym
 import numpy as np
+import cvxpy
 
 from interval import Interval
+
+
+def TestDcp(dcp_convex_detector):
+    x, y = cvxpy.Variable(), cvxpy.Variable()
+    assert dcp_convex_detector.convexity_detection_expression((x**2))
+
+    assert dcp_convex_detector.convexity_detection_expression(x * x) is None
 
 
 def TestSingleVariable(convex_detector):
@@ -83,6 +91,11 @@ def TestGershgorin():
 
 
 if __name__ == '__main__':
+    print('Test DCP')
+    dcp_detector = DCPConvexDetector()
+    TestDcp(dcp_detector)
+    print('Finished')
+    print()
 
     print('Testing PsdIntervalConvexDetector')
     psd_interval_convex_detector = PsdIntervalConvexDetector()
@@ -95,20 +108,20 @@ if __name__ == '__main__':
     print()
 
     print('Testing GershgorinConvexDetector')
-    psd_interval_convex_detector = GershgorinConvexDetector()
+    convex_detector = GershgorinConvexDetector()
     try:
-        TestSingleVariable(psd_interval_convex_detector)
-        TestMultiVariable(psd_interval_convex_detector)
+        TestSingleVariable(convex_detector)
+        TestMultiVariable(convex_detector)
     except AssertionError as e:
         print(f'Failed tests!')
     print('Finished')
     print()
 
     print('Testing CombinedConvexDetector')
-    psd_interval_convex_detector = CombinedConvexDetector()
+    convex_detector = CombinedConvexDetector()
     try:
-        TestSingleVariable(psd_interval_convex_detector)
-        TestMultiVariable(psd_interval_convex_detector)
+        TestSingleVariable(convex_detector)
+        TestMultiVariable(convex_detector)
     except AssertionError as e:
         print(f'Failed tests!')
     print('Finished')
