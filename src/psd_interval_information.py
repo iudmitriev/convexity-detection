@@ -6,8 +6,9 @@ class PsdIntervalInformation:
     Encodes psd information about a scalar, vector or matrix as described in "Convexity Certificates from Hessians":
     For scalar expressions, the interval encodes (a superset of) the domain of the expression
     For vector expressions, the interval encodes (a superset of) the domains of all vector entries
-    For matrix expression, any interval in [0, inf) encodes psd information and
+    For matrix expression, any interval in [0, inf) encodes psd information,
                            any interval in (−inf, 0] encodes nsd information
+                           other intervals encodes no information
 
     Attributes:
         interval: psd information as described above
@@ -49,13 +50,17 @@ class PsdIntervalInformation:
 
     def is_scalar(self):
         """
-        Returns True if scalar, False otherwise
+        Returns:
+            True if object is scalar
+            False otherwise
         """
         return self.shape == (1, 1)
 
     def is_vector(self):
         """
-        Returns True if vector, False otherwise
+        Returns:
+            True if object is vector
+            False otherwise
         """
         return self.shape[0] == 1 or self.shape[1] == 1
 

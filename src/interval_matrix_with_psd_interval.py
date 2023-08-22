@@ -4,7 +4,30 @@ from psd_interval_information import PsdIntervalInformation
 
 
 class IntervalMatrixWithPsdInterval:
+    """
+    Combines classes IntervalMatrix and PsdIntervalInformation, and has two parts:
+    1) Matrix, each element of which is an interval
+    2) Interval, that encodes psd information about a scalar, vector or matrix:
+        For scalar expressions, the interval encodes (a superset of) the domain of the expression
+        For vector expressions, the interval encodes (a superset of) the domains of all vector entries
+        For matrix expression, any interval in [0, inf) encodes psd information,
+                               any interval in (−inf, 0] encodes nsd information
+                               other intervals encodes no information
+
+    Attributes:
+        matrix: matrix of intervals
+        interval: interval, that encodes psd information
+    """
     def __init__(self, matrix=None, psd_interval=None):
+        """
+        Parameters:
+            matrix: IntervalMatrix
+                matrix of intervals
+                if None, default value of IntervalMatrix is used
+            psd_interval: PsdIntervalInformation
+                interval, that encodes psd information
+                If None, default value of PsdIntervalInformation is used
+        """
         if matrix is None:
             matrix = IntervalMatrix()
         self.matrix = matrix
@@ -18,10 +41,23 @@ class IntervalMatrixWithPsdInterval:
 
     @property
     def shape(self):
+        """
+        Returns:
+            shape of the corresponding matrix
+        """
         return self.matrix.shape
 
     @staticmethod
     def value_to_interval_matrix_with_psd_interval(value):
+        """
+                Converts value to IntervalMatrix
+                Parameters:
+                    value: int, float, Interval, IntervalMatrix,
+                           PsdIntervalInformation or IntervalMatrixWithPsdInterval
+                        value to be converted
+                Returns:
+                    Converted value
+                """
         if isinstance(value, IntervalMatrixWithPsdInterval):
             return value
         if isinstance(value, (int, float, Interval)):
@@ -41,6 +77,11 @@ class IntervalMatrixWithPsdInterval:
         return IntervalMatrixWithPsdInterval(matrix=self.matrix.T, psd_interval=self.interval)
 
     def is_scalar(self):
+        """
+        Returns:
+            True if object is scalar
+            False otherwise
+        """
         return self.matrix.is_scalar()
 
     def __str__(self):
@@ -79,9 +120,24 @@ class IntervalMatrixWithPsdInterval:
                                              psd_interval=self.interval.dot(other.interval))
 
     def sign(self):
+        """
+        Returns
+            True if object is psd
+            False if object is nsd
+            None if none of the above
+        """
         return self.interval.sign()
 
     def is_gershgorin_convex(self):
+        """
+        Calculates lower and upper bounds for matrix of intervals
+        using gershgorin theorem and gets corresponding convex information
+
+        Returns:
+            True if object is psd
+            False if object is nsd
+            None if none of the above
+        """
         return self.matrix.is_gershgorin_convex()
 
     @staticmethod
