@@ -115,6 +115,10 @@ class IntervalMatrixWithPsdInterval:
         return IntervalMatrixWithPsdInterval(matrix=self.matrix ** power.matrix,
                                              psd_interval=self.interval ** power.interval)
 
+    def __abs__(self):
+        return IntervalMatrixWithPsdInterval(matrix=abs(self.matrix),
+                                             psd_interval=abs(self.interval),)
+
     def dot(self, other):
         return IntervalMatrixWithPsdInterval(matrix=self.matrix.dot(other.matrix),
                                              psd_interval=self.interval.dot(other.interval))

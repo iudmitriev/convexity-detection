@@ -133,6 +133,11 @@ class PsdIntervalInformation:
             return PsdIntervalInformation(shape=self.shape, interval=self.interval ** power.interval)
         return PsdIntervalInformation(shape=self.shape, interval=None, is_psd=None)
 
+    def __abs__(self):
+        if self.is_vector():
+            return PsdIntervalInformation(shape=self.shape, interval=abs(self.interval))
+        return PsdIntervalInformation(shape=self.shape, interval=None, is_psd=None)
+
     @staticmethod
     def sin(psd_interval):
         if psd_interval.is_vector():

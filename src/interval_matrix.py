@@ -113,6 +113,9 @@ class IntervalMatrix:
             raise ValueError(f'Only scalar powers are supported, got shape = {power.shape}')
         return IntervalMatrix(values=self.values ** power.values[0, 0])
 
+    def __abs__(self):
+        return IntervalMatrix(values=abs(self.values))
+
     @staticmethod
     def sin(interval_matrix):
         vec_func = np.vectorize(Interval.sin)
