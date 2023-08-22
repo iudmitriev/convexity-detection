@@ -216,3 +216,20 @@ class IntervalMatrix:
             Identity matrix of size n x n
         """
         return IntervalMatrix(values=np.diag(np.full(shape=(n,), fill_value=Interval([1, 1]), dtype=object)))
+
+    @staticmethod
+    def full(value, shape):
+        """
+        Return a new matrix of given shape, filled with value.
+        Parameters:
+            value: int, float or Interval
+                Value to fill
+            shape: tuple
+                Shape of the new matrix
+        Returns:
+            matrix: IntervalMatrix
+                Matrix of given shape, filled with value
+        """
+        value = Interval.valueToInterval(value)
+        values = np.full(shape=shape, fill_value=value, dtype=object)
+        return IntervalMatrix(values=values)

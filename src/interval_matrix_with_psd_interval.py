@@ -173,3 +173,18 @@ class IntervalMatrixWithPsdInterval:
     @staticmethod
     def log(matrix_with_psd_interval):
         return IntervalMatrixWithPsdInterval.ln(matrix_with_psd_interval)
+
+    @staticmethod
+    def full(value, shape):
+        """
+        Return a new matrix of given shape, filled with value.
+        Parameters:
+            value: int, float or Interval
+                Value to fill
+            shape: tuple
+                Shape of the new matrix
+        Returns:
+            matrix: IntervalMatrixWithPsdInterval
+                Matrix of given shape, filled with value
+        """
+        return IntervalMatrixWithPsdInterval(matrix=IntervalMatrix.full(value=value, shape=shape))
