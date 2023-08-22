@@ -21,7 +21,6 @@ def TestSingleVariable(convex_detector):
     assert not convex_detector.convexity_detection_str('sin(x)', symbol_values={'x': Interval([0, 3.14])})
     print('Finished TestSingleVariable')
 
-
 def TestSingleVariableInterval(convex_detector):
     x = sym.Symbol('x')
     assert convex_detector._get_matrix(2 - x, symbol_values={'x': Interval([0, 1])}).interval == Interval([1, 2])
@@ -90,7 +89,7 @@ def TestGershgorin():
     print('Finished Gershgorin')
 
 
-if __name__ == '__main__':
+def TestAll():
     print('Test DCP')
     dcp_detector = DCPConvexDetector()
     TestDcp(dcp_detector)
@@ -133,3 +132,26 @@ if __name__ == '__main__':
         print(f'Failed!')
 
     print('Finished all!')
+
+
+if __name__ == '__main__':
+    combined_convex_detector = CombinedConvexDetector()
+
+    expr = 'X.T * A * X'
+    matrix_symbol_dict = {'X': sym.MatrixSymbol('X', 10, 1), 'A': sym.MatrixSymbol('A', 10, 10)}
+
+    vectorized_to_interval = np.vectorize(Interval.valueToInterval)
+    values = vectorized_to_interval(np.diag(np.arange(1, 11)).astype(object))
+    symbol_space = {'A': IntervalMatrixWithPsdInterval(matrix=IntervalMatrix(values=values))}
+
+    print(combined_convex_detector.convexity_detection_str(expr, matrix_symbol_dict=matrix_symbol_dict,
+                                                           symbol_values=symbol_space))
+
+    expr = 'HadamardPower(X, 10) * A'
+    matrix_symbol_dict = {'X': sym.MatrixSymbol('X', 10, 1), 'A': sym.MatrixSymbol('A', 1, 10)}
+
+    symbol_space = {'A': IntervalMatrixWithPsdInterval.full(shape=(1, 10), value=1)}
+
+    print(combined_convex_detector._positivity_detection_str(expr, matrix_symbol_dict=matrix_symbol_dict,
+                                                             symbol_values=symbol_space))
+    #TestAll()
