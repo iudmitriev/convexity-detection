@@ -5,6 +5,8 @@ from psd_interval_information import PsdIntervalInformation
 from interval_matrix_with_psd_interval import IntervalMatrixWithPsdInterval
 
 from abc import ABC, abstractmethod
+import operator
+import itertools
 
 
 class BaseConvexDetector(ABC):
@@ -69,6 +71,11 @@ class HessianConvexDetector(BaseConvexDetector):
         else:
             raise ValueError(f'Can not detect variable')
         return sym.diff(sym.diff(expression, variable), variable)
+
+    def _positivity_detection_str(self, expression, symbol_values=None, **kwargs):
+        if isinstance(expression, str):
+            expression = self.parse_str(expression, **kwargs)
+        return self._positivity_detection(expression, symbol_values=symbol_values)
 
     @abstractmethod
     def _positivity_detection(self, expression, symbol_values=None):
@@ -148,6 +155,12 @@ class SubstitutingHessianConvexDetector(HessianConvexDetector):
         return self._combine_intervals(expression, sub_intervals)
 
     def _combine_intervals(self, expression, sub_intervals):
+        if expression.func == sym.matrices.expressions.hadamard.HadamardPower:
+            return sub_intervals[0] ** sub_intervals[1]
+        elif expression.func == sym.matrices.expressions.HadamardProduct or \
+                expression.func == sym.matrices.expressions.hadamard_product:
+            return itertools.accumulate(sub_intervals, func=operator.mul)
+
         symbols = []
         for i, sub_interval in enumerate(sub_intervals):
             if sub_interval.is_scalar():
