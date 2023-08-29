@@ -69,7 +69,7 @@ class PsdIntervalInformation:
         """
         Converts value to PsdIntervalInformation
         Parameters:
-            value: int, float, Interval or PsdIntervalInformation
+            value: int, float, Interval, or PsdIntervalInformation
                 value to be converted
         Returns:
             Converted value
@@ -83,7 +83,7 @@ class PsdIntervalInformation:
 
     @property
     def T(self):
-        return PsdIntervalInformation(shape=self.shape, interval=self.interval)
+        return PsdIntervalInformation(shape=(self.shape[1], self.shape[0]), interval=self.interval)
 
     def __str__(self):
         return f'PsdIntervalInformation(shape = {self.shape}, interval = {self.interval})'
@@ -211,3 +211,34 @@ class PsdIntervalInformation:
     def __eq__(self, other):
         other = PsdIntervalInformation.value_to_psd_interval(other)
         return self.shape == other.shape and self.interval == other.interval
+
+    @staticmethod
+    def eye(shape):
+        """
+        Returns:
+            Identity matrix of size shape
+        """
+        return PsdIntervalInformation(shape=shape, is_psd=True)
+
+    @staticmethod
+    def zero(shape):
+        """
+        Returns:
+            Zero matrix of size shape
+        """
+        return PsdIntervalInformation(shape=shape, is_psd=True)
+
+    @staticmethod
+    def full(value, shape):
+        """
+        Return a new matrix of given shape, filled with value.
+        Parameters:
+            value: int, float or Interval
+                Value to fill
+            shape: tuple
+                Shape of the new matrix
+        Returns:
+            matrix: IntervalMatrix
+                Matrix of given shape, filled with value
+        """
+        return PsdIntervalInformation(shape=shape)

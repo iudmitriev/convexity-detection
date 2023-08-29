@@ -175,6 +175,24 @@ class IntervalMatrixWithPsdInterval:
         return IntervalMatrixWithPsdInterval.ln(matrix_with_psd_interval)
 
     @staticmethod
+    def eye(shape):
+        """
+        Returns:
+            Identity matrix of size shape
+        """
+        return IntervalMatrixWithPsdInterval(matrix=IntervalMatrix.eye(shape),
+                                             psd_interval=PsdIntervalInformation.eye(shape))
+
+    @staticmethod
+    def zero(shape):
+        """
+        Returns:
+            Zero matrix of size shape
+        """
+        return IntervalMatrixWithPsdInterval(matrix=IntervalMatrix.zero(shape),
+                                             psd_interval=PsdIntervalInformation.zero(shape))
+
+    @staticmethod
     def full(value, shape):
         """
         Return a new matrix of given shape, filled with value.
@@ -187,4 +205,5 @@ class IntervalMatrixWithPsdInterval:
             matrix: IntervalMatrixWithPsdInterval
                 Matrix of given shape, filled with value
         """
-        return IntervalMatrixWithPsdInterval(matrix=IntervalMatrix.full(value=value, shape=shape))
+        return IntervalMatrixWithPsdInterval(matrix=IntervalMatrix.full(value, shape),
+                                             psd_interval=PsdIntervalInformation.full(value, shape))

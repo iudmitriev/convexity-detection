@@ -210,12 +210,22 @@ class IntervalMatrix:
         return IntervalMatrix(values=np.linalg.matrix_power(matrix.values, power))
 
     @staticmethod
-    def eye(n):
+    def eye(shape):
         """
         Returns:
-            Identity matrix of size n x n
+            Identity matrix of size shape[0] x shape[0]
         """
-        return IntervalMatrix(values=np.diag(np.full(shape=(n,), fill_value=Interval([1, 1]), dtype=object)))
+        diag = np.empty(shape=(shape[0],), dtype=object)
+        diag[:] = Interval([1, 1])
+        return IntervalMatrix(values=np.diag(diag))
+
+    @staticmethod
+    def zero(shape):
+        """
+        Returns:
+            Zero matrix of size shape
+        """
+        return IntervalMatrix.full(value=0, shape=shape)
 
     @staticmethod
     def full(value, shape):
