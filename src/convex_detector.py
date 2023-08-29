@@ -112,6 +112,11 @@ class SubstitutingHessianConvexDetector(HessianConvexDetector):
     def _identity(shape=None):
         pass
 
+    @staticmethod
+    @abstractmethod
+    def _zero(shape=None):
+        pass
+
     def _match_atomic(self, atomic_expr, symbol_values=None):
 
         if isinstance(atomic_expr, sym.core.symbol.Symbol):
@@ -128,6 +133,8 @@ class SubstitutingHessianConvexDetector(HessianConvexDetector):
             if (symbol_values is not None) and (str(atomic_expr) in symbol_values):
                 return self._value_to_substitution(symbol_values[str(atomic_expr)])
             return self._default_substitution(shape=atomic_expr.shape)
+        if isinstance(atomic_expr, sym.matrices.expressions.special.ZeroMatrix):
+            return self._zero(shape=atomic_expr.shape)
         if isinstance(atomic_expr, sym.Identity):
             return self._identity(shape=atomic_expr.shape)
 
@@ -202,7 +209,11 @@ class PsdIntervalConvexDetector(SubstitutingHessianConvexDetector):
 
     @staticmethod
     def _identity(shape=None):
-        return PsdIntervalInformation(shape=shape, is_psd=True)
+        return PsdIntervalInformation.eye(shape=shape)
+
+    @staticmethod
+    def _zero(shape=None):
+        return PsdIntervalInformation.zero(shape=shape)
 
 
 class GershgorinConvexDetector(SubstitutingHessianConvexDetector):
@@ -234,7 +245,11 @@ class GershgorinConvexDetector(SubstitutingHessianConvexDetector):
 
     @staticmethod
     def _identity(shape=None):
-        return IntervalMatrix.eye(shape[0])
+        return IntervalMatrix.eye(shape=shape)
+
+    @staticmethod
+    def _zero(shape=None):
+        return IntervalMatrix.zero(shape=shape)
 
 
 class CombinedConvexDetector(SubstitutingHessianConvexDetector):
@@ -268,5 +283,8 @@ class CombinedConvexDetector(SubstitutingHessianConvexDetector):
 
     @staticmethod
     def _identity(shape=None):
-        return IntervalMatrixWithPsdInterval(matrix=IntervalMatrix.eye(shape[0]),
-                                             psd_interval=PsdIntervalInformation(shape=shape, is_psd=True))
+        return IntervalMatrixWithPsdInterval.eye(shape=shape)
+
+    @staticmethod
+    def _zero(shape=None):
+        return IntervalMatrixWithPsdInterval.zero(shape=shape)
