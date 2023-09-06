@@ -51,9 +51,9 @@ class HessianConvexDetector(BaseConvexDetector):
             return sym.parsing.sympy_parser.parse_expr(string, evaluate=False)
         return sym.parsing.sympy_parser.parse_expr(string, local_dict=matrix_symbol_dict, evaluate=False)
 
-    def convexity_detection_expression(self, expression, symbol_values=None):
+    def convexity_detection_expression(self, expression, symbol_values=None, **kwargs):
         second_diff = self._get_second_diff(expression)
-        return self._positivity_detection(second_diff, symbol_values)
+        return self.positivity_detection(second_diff, symbol_values)
 
     @staticmethod
     def _get_second_diff(expression):
@@ -61,7 +61,7 @@ class HessianConvexDetector(BaseConvexDetector):
         probably_variables = {'x', 'X', 'y', 'Y', 'z', 'Z'}
         variables = list(set(map(str, symbols)) & probably_variables)
 
-        if len(variables) != 1:
+        if len(variables) > 1:
             msg = f'Expression should have only one named variable (which can be matrix), detected {symbols}'
             raise ValueError(msg)
         for symbol in symbols:
@@ -75,10 +75,10 @@ class HessianConvexDetector(BaseConvexDetector):
     def _positivity_detection_str(self, expression, symbol_values=None, **kwargs):
         if isinstance(expression, str):
             expression = self.parse_str(expression, **kwargs)
-        return self._positivity_detection(expression, symbol_values=symbol_values)
+        return self.positivity_detection(expression, symbol_values=symbol_values)
 
     @abstractmethod
-    def _positivity_detection(self, expression, symbol_values=None):
+    def positivity_detection(self, expression, symbol_values=None):
         pass
 
 
@@ -88,7 +88,7 @@ class SubstitutingHessianConvexDetector(HessianConvexDetector):
         msg = f'method \"custom_modules\" not implemented for SubstitutingHessianConvexDetector'
         raise NotImplementedError(msg)
 
-    def _positivity_detection(self, expression, symbol_values=None):
+    def positivity_detection(self, expression, symbol_values=None):
         substitution = self._get_substitution(expression, symbol_values=symbol_values)
         return substitution.sign()
 
@@ -126,7 +126,7 @@ class SubstitutingHessianConvexDetector(HessianConvexDetector):
 
         if isinstance(atomic_expr, sym.core.numbers.Integer):
             return self._value_to_substitution(int(atomic_expr))
-        if isinstance(atomic_expr, sym.core.numbers.Float):
+        if isinstance(atomic_expr, sym.core.numbers.Float | sym.core.numbers.Half):
             return self._value_to_substitution(float(atomic_expr))
 
         if isinstance(atomic_expr, sym.matrices.expressions.matexpr.MatrixSymbol):
@@ -145,9 +145,9 @@ class SubstitutingHessianConvexDetector(HessianConvexDetector):
 
                 first_is_matrix = isinstance(first_arg, sym.matrices.expressions.MatrixExpr)
                 second_is_matrix = isinstance(second_arg, sym.matrices.expressions.MatrixExpr)
-                if first_is_matrix and second_is_matrix and first_arg.equals(second_arg.T):
-                    shape = (first_arg.shape[0], second_arg.shape[1])
-                    return self._default_psd(shape=shape)
+                #if first_is_matrix and second_is_matrix and first_arg.equals(second_arg.T):
+                #    shape = (first_arg.shape[0], second_arg.shape[1])
+                 #   return self._default_psd(shape=shape)
         return None
 
     def _get_substitution(self, expression, symbol_values=None):
@@ -164,6 +164,8 @@ class SubstitutingHessianConvexDetector(HessianConvexDetector):
     def _combine_intervals(self, expression, sub_intervals):
         if expression.func == sym.matrices.expressions.hadamard.HadamardPower:
             return sub_intervals[0] ** sub_intervals[1]
+        elif expression.func == sym.matrices.expressions.MatPow:
+            return self.custom_modules[0]['matrix_power'](sub_intervals[0], sub_intervals[1])
         elif expression.func == sym.matrices.expressions.HadamardProduct or \
                 expression.func == sym.matrices.expressions.hadamard_product:
             return itertools.accumulate(sub_intervals, func=operator.mul)
@@ -190,7 +192,8 @@ class PsdIntervalConvexDetector(SubstitutingHessianConvexDetector):
                 'exp': PsdIntervalInformation.exp,
                 'ln': PsdIntervalInformation.ln,
                 'log': PsdIntervalInformation.ln,
-                'matrix_power': PsdIntervalInformation.matrix_power
+                'matrix_power': PsdIntervalInformation.matrix_power,
+                'diag': PsdIntervalInformation.diag
             },
             'numpy'
         ]
@@ -226,7 +229,8 @@ class GershgorinConvexDetector(SubstitutingHessianConvexDetector):
                 'exp': IntervalMatrix.exp,
                 'ln': IntervalMatrix.ln,
                 'log': IntervalMatrix.ln,
-                'matrix_power': IntervalMatrix.matrix_power
+                'matrix_power': IntervalMatrix.matrix_power,
+                'diag': IntervalMatrix.diag
             },
             'numpy'
         ]
@@ -262,7 +266,8 @@ class CombinedConvexDetector(SubstitutingHessianConvexDetector):
                 'exp': IntervalMatrixWithPsdInterval.exp,
                 'ln': IntervalMatrixWithPsdInterval.ln,
                 'log': IntervalMatrixWithPsdInterval.ln,
-                'matrix_power': IntervalMatrixWithPsdInterval.matrix_power
+                'matrix_power': IntervalMatrixWithPsdInterval.matrix_power,
+                'diag': IntervalMatrixWithPsdInterval.diag
             },
             'numpy'
         ]

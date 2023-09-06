@@ -8,6 +8,7 @@ from interval import Interval
 
 import time
 
+#TODO:Refactor all tests
 
 def TestDcp(dcp_convex_detector):
     x, y = cvxpy.Variable(), cvxpy.Variable()
@@ -148,9 +149,9 @@ def Test1():
             start = time.time()
             result = convex_detector.convexity_detection_str(function, matrix_symbol_dict=matrix_symbol_dict)
             end = time.time()
-            times.append(end - start)
+            times.append((end - start) * 1000)
         times = np.array(times)
-        print(f'{method}: {result}, {times.mean():.5f}s \\pm {times.std():.5f}s')
+        print(f'{method}: {result}, {times.mean():.5f}ms \\pm {times.std():.5f}ms')
 
 
 
@@ -178,16 +179,26 @@ def Test2():
             result = convex_detector.convexity_detection_str(function, matrix_symbol_dict=matrix_symbol_dict,
                                                              symbol_values=symbol_space)
             end = time.time()
-            times.append(end - start)
+            times.append((end - start) * 1000)
         times = np.array(times)
-        print(f'{method}: {result}, {times.mean():.5f}s \\pm {times.std():.5f}s')
+        print(f'{method}: {result}, {times.mean():.5f}ms \\pm {times.std():.5f}ms')
 
 
 def Test3():
-    function = '(HadamardPower(X, 10)).T * E'
-    print(function)
-    vectorized_to_interval = np.vectorize(Interval.valueToInterval)
-    values = vectorized_to_interval(np.diag(np.arange(1, 11)).astype(object))
+    E = sym.MatrixSymbol('E', 10, 1)
+    X = sym.MatrixSymbol('X', 10, 1)
+
+    class diag(sym.matrices.expressions.MatrixExpr):
+        @classmethod
+        def eval(self, x):
+            return sym.eye(10)
+
+        @property
+        def shape(self):
+            return 10, 10
+
+
+    expr = 90 * sym.matrices.expressions.hadamard.HadamardPower(diag(X), 8)
     for method, convex_detector in methods.items():
 
         if method == 'PsdInterval':
@@ -201,36 +212,137 @@ def Test3():
             'E': E
         }
 
-        n_runs = 2
+        n_runs = 100
         times = []
         result = -1
-        try:
-            for i in range(n_runs):
-                start = time.time()
-                result = convex_detector.convexity_detection_str(function, matrix_symbol_dict=matrix_symbol_dict,
-                                                                 symbol_values=symbol_space)
-                end = time.time()
-                times.append(end - start)
-            times = np.array(times)
-            print(f'{method}: {result}, {times.mean():.5f}s \\pm {times.std():.5f}s')
-        except Exception as e:
-            print(f'Failed with error {e}')
+        for i in range(n_runs):
+            start = time.time()
+            result = convex_detector.positivity_detection(expr, symbol_values=symbol_space)
+            end = time.time()
+            times.append((end - start) * 1000)
+        times = np.array(times)
+        print(f'{method}: {result}, {times.mean():.5f}ms \\pm {times.std():.5f}ms')
 
 
 def Test4():
     function = '-exp(-0.5 * X.T * X)'
-    print(function)
+    E = sym.MatrixSymbol('E', 10, 10)
+    X = sym.MatrixSymbol('X', 10, 1)
+
+    class exp(sym.Function):
+        @classmethod
+        def eval(self, x):
+            return 1 # placeholder
+
+    # -(X * sym.exp(X.T * X / 2) * X.T) + sym.exp(X.T * X / 2) * E
+    expr = -(exp(X.T * X / 2) * X * X.T) + exp(X.T * X / 2) * E
     for method, convex_detector in methods.items():
-        n_runs = 1
-        result = -1
+
+        if method == 'PsdInterval':
+            E = PsdIntervalInformation.full(value=1, shape=(10, 10))
+        elif method == 'Gershgorin':
+            E = IntervalMatrix.full(value=1, shape=(10, 10))
+        else:
+            E = IntervalMatrixWithPsdInterval.full(value=1, shape=(10, 10))
+
+        symbol_space = {
+            'E': E
+        }
+
+        n_runs = 100
         times = []
+        result = -1
         for i in range(n_runs):
             start = time.time()
-            result = convex_detector.convexity_detection_str(function, matrix_symbol_dict=matrix_symbol_dict)
+            result = convex_detector.positivity_detection(expr, symbol_values=symbol_space)
             end = time.time()
-            times.append(end - start)
+            times.append((end - start) * 1000)
         times = np.array(times)
-        print(f'{method}: {result}, {times.mean():.5f}s \\pm {times.std():.5f}s')
+        print(f'{method}: {result}, {times.mean():.5f}ms \\pm {times.std():.5f}ms')
+
+
+def Test5():
+    d = 10
+
+    E = sym.MatrixSymbol('E', d, 1)
+    X = sym.MatrixSymbol('X', d, 1)
+    N = sym.MatrixSymbol('N', d, d)
+    expr = (X - E).T * (X - E) - X.T * N * X
+
+    values = np.empty(shape=(d, d), dtype=object)
+    values[:] = Interval([0, 0])
+    for i in range(1, d):
+        values[i, i-1] = Interval([1, 1])
+    for method, convex_detector in methods.items():
+
+        if method == 'PsdInterval':
+            E = PsdIntervalInformation.full(value=1, shape=(10, 1))
+            N = convex_detector._default_substitution(shape=(d, d))
+        elif method == 'Gershgorin':
+            E = IntervalMatrix.full(value=1, shape=(10, 1))
+            N = convex_detector._value_to_substitution(IntervalMatrix(values=values))
+        else:
+            E = IntervalMatrixWithPsdInterval.full(value=1, shape=(10, 1))
+            N = convex_detector._value_to_substitution(IntervalMatrix(values=values))
+
+        symbol_space = {
+            'E': E,
+            'N': N
+        }
+
+        n_runs = 100
+        times = []
+        result = -1
+        for i in range(n_runs):
+            start = time.time()
+            result = convex_detector.convexity_detection_expression(expr, symbol_values=symbol_space)
+            end = time.time()
+            times.append((end - start) * 1000)
+        times = np.array(times)
+        print(f'{method}: {result}, {times.mean():.2f}ms $\\pm$ {times.std():.2f}ms')
+
+
+def Test6():
+    X = sym.MatrixSymbol('X', 10, 1)
+    N = sym.MatrixSymbol('N', 10, 10)
+    vectorized_to_interval = np.vectorize(Interval.valueToInterval)
+    n_values = vectorized_to_interval(np.diag(np.arange(1, 11)).astype(object))
+    x_values = np.empty(shape=(10, 1), dtype=object)
+    x_values[:] = Interval([-1, 1])
+
+    class diag(sym.matrices.expressions.MatrixExpr):
+        @classmethod
+        def eval(self, x):
+            return sym.eye(10)
+
+        @property
+        def shape(self):
+            return 10, 10
+
+    expr = diag(X) * N * diag(X)
+    for method, convex_detector in methods.items():
+        if method == 'PsdInterval':
+            N = convex_detector._default_substitution(shape=(10, 10))
+            X = convex_detector._default_substitution(shape=(10, 1))
+        else:
+            N = convex_detector._value_to_substitution(IntervalMatrix(values=n_values))
+            X = convex_detector._value_to_substitution(IntervalMatrix(values=x_values))
+
+        symbol_space = {
+            'N': N,
+            'X': X
+        }
+
+        n_runs = 100
+        times = []
+        result = -1
+        for i in range(n_runs):
+            start = time.time()
+            result = convex_detector.positivity_detection(expr, symbol_values=symbol_space)
+            end = time.time()
+            times.append((end - start) * 1000)
+        times = np.array(times)
+        print(f'{method}: {result}, {times.mean():.5f}ms \\pm {times.std():.5f}ms')
 
 
 if __name__ == '__main__':
@@ -248,12 +360,15 @@ if __name__ == '__main__':
     # ]
 
     methods = {
-        'PsdInterval': PsdIntervalConvexDetector(),
-        'Gershgorin': GershgorinConvexDetector(),
+   #     'PsdInterval': PsdIntervalConvexDetector(),
+    #    'Gershgorin': GershgorinConvexDetector(),
         'Combined': CombinedConvexDetector()
     }
 
     # Test1()
     # Test2()
     # Test3()
-    Test4()
+    # Test4()
+    # Test5()
+    Test6()
+
