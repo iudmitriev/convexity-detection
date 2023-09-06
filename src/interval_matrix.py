@@ -205,8 +205,8 @@ class IntervalMatrix:
             raise ValueError(f'Only scalar powers are supported, got shape = {power.shape}')
         power = power.values[0, 0]
         if power[0] != power[1]:
-            raise ValueError(f'Only scalar powers are supported, got interval: {power}')
-        power = power[0]
+            raise ValueError(f'Only integer powers are supported, got interval: {power}')
+        power = int(power[0])
         return IntervalMatrix(values=np.linalg.matrix_power(matrix.values, power))
 
     @staticmethod
@@ -243,3 +243,20 @@ class IntervalMatrix:
         value = Interval.valueToInterval(value)
         values = np.full(shape=shape, fill_value=value, dtype=object)
         return IntervalMatrix(values=values)
+
+    @staticmethod
+    def diag(value):
+        """
+        Construct a diagonal array from vector
+        Parameters:
+            value: IntervalMatrix
+                vector to construct array
+        Returns:
+            matrix: IntervalMatrix
+                diagonal array, created from value
+        """
+        assert value.shape[1] == 1, 'Can diagonalize only horizontal vectors'
+        matrix = IntervalMatrix.zero(shape=(value.shape[0], value.shape[0]))
+        for i in range(value.shape[1]):
+            matrix.values[i, i] = value.values[i, 0]
+        return matrix

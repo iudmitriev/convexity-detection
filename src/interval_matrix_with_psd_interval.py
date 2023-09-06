@@ -74,7 +74,7 @@ class IntervalMatrixWithPsdInterval:
 
     @property
     def T(self):
-        return IntervalMatrixWithPsdInterval(matrix=self.matrix.T, psd_interval=self.interval)
+        return IntervalMatrixWithPsdInterval(matrix=self.matrix.T, psd_interval=self.interval.T)
 
     def is_scalar(self):
         """
@@ -207,3 +207,18 @@ class IntervalMatrixWithPsdInterval:
         """
         return IntervalMatrixWithPsdInterval(matrix=IntervalMatrix.full(value, shape),
                                              psd_interval=PsdIntervalInformation.full(value, shape))
+
+    @staticmethod
+    def diag(value):
+        """
+        Construct a diagonal array from vector
+        Parameters:
+            value: IntervalMatrixWithPsdInterval
+                vector to construct array
+        Returns:
+            matrix: IntervalMatrixWithPsdInterval
+                diagonal array, created from value
+        """
+        assert value.shape[1] == 1, 'Can diagonalize only horizontal vectors'
+        matrix = IntervalMatrix.diag(value.matrix)
+        return IntervalMatrixWithPsdInterval(matrix=matrix)

@@ -33,15 +33,15 @@ class PsdIntervalInformation:
                 raise ValueError(f'Only 1d or 2d shapes are supported, got {shape}')
             if len(shape) == 1:
                 shape += (1,)
-            self.shape = shape
+            self.shape = tuple(map(int, shape))
 
         if interval is None:
             if is_psd is None:
                 self.interval = Interval([float('-inf'), float('inf')])
             elif is_psd:
-                self.interval = Interval([0, float('inf')])
+                self.interval = Interval([1, float('inf')])
             else:
-                self.interval = Interval([float('-inf'), 0])
+                self.interval = Interval([float('-inf'), -1])
         else:
             if is_psd is not None:
                 msg = f'For PsdIntervalInformation only one of is_psd and psd_interval should be passed, got both'
@@ -120,6 +120,8 @@ class PsdIntervalInformation:
 
         if self.is_vector():
             # Two vectors
+            if self.interval == 0 or other.interval == 0:
+                return PsdIntervalInformation(shape=self.shape, interval=Interval.valueToInterval(0))
             return PsdIntervalInformation(shape=self.shape, interval=self.interval * other.interval)
 
         # Two matrices
@@ -178,9 +180,12 @@ class PsdIntervalInformation:
 
         shape = (self.shape[0], other.shape[1])
         if shape == (1, 1):
-            interval = self.interval * other.interval * self.shape[1]
+            if self.interval == 0 or other.interval == 0:
+                return PsdIntervalInformation(shape=self.shape, interval=Interval.valueToInterval(0))
+            interval = self.interval * other.interval
+            interval = interval * self.shape[1]
             return PsdIntervalInformation(shape=self.shape, interval=interval)
-        return PsdIntervalInformation(shape=self.shape, interval=None, is_psd=None)
+        return PsdIntervalInformation(shape=shape, interval=None, is_psd=None)
 
     def sign(self):
         """
@@ -242,3 +247,17 @@ class PsdIntervalInformation:
                 Matrix of given shape, filled with value
         """
         return PsdIntervalInformation(shape=shape)
+
+    @staticmethod
+    def diag(value):
+        """
+        Construct a diagonal array from vector
+        Parameters:
+            value: PsdIntervalInformation
+                vector to construct array
+        Returns:
+            matrix: PsdIntervalInformation
+                diagonal array, created from value
+        """
+        assert value.shape[1] == 1, 'Can diagonalize only horizontal vectors'
+        return PsdIntervalInformation(shape=(value.shape[0], value.shape[0]))
